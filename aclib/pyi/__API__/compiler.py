@@ -57,7 +57,7 @@ def compile(srcdir: str, dstdir: str = DIR_COMPILED, exclude_scripts: list[str] 
     exclude_scripts = exclude_scripts or []
     language_level = platform.python_version().split(".")[0]
     stringcode_pattern = 'f?((["\']{3})|(["\']))[\\s\\S]*?(?<!\\\\)\\1|#[\\s\\S]+?(?=\n|$)'
-    tempdir = tempfile.TemporaryDirectory(dir='', ignore_cleanup_errors=True)
+    tempdir = tempfile.TemporaryDirectory(dir='')
     copy_tree(srcdir, tempdir.name)
     all_pyfiles = matchpath('**/*.py', root=tempdir.name, onlyfile=True)
     exclude_pyfiles = matchpath(*exclude_scripts, root=tempdir.name, onlyfile=True)

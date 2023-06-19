@@ -5,7 +5,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='aclib.pyi',
-    version='1.0.0',
+    version='1.0.1',
     author='AnsChaser',
     author_email='anschaser@163.com',
     description='compile and pack python project to exe with pyd.',

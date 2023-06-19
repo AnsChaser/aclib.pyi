@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os, time, re, glob, tempfile, traceback, PyInstaller.__main__
-from distutils.dir_util import remove_tree
 
 from .const import *
 from .colorstr import *
@@ -10,8 +9,8 @@ def makeversion(dstdir, appname) -> str:
     y, m, d = (str(i) for i in time.localtime()[:3])
     mainversion = y[-2:] + m.zfill(2) + d.zfill(2)
     subversions = ['00']
-    for fp in glob.glob('*', root_dir=dstdir):
-        subversions += re.findall(f'^{re.escape(appname)}_{mainversion}(\d\d)(?:\.exe)?$', fp)
+    for fp in glob.glob(os.path.join(dstdir, '*')):
+        subversions += re.findall(f'^{re.escape(os.path.join(dstdir, appname))}_{mainversion}(\d\d)(?:\.exe)?$', fp)
     subversions.sort(key=lambda v: int(v))
     subversion = str(int(subversions[-1]) + 1).zfill(2)
     return mainversion + subversion
@@ -29,7 +28,7 @@ def pyipack(
     appfiles: list[str]=None,    # [relaglob] 相对路径起点：scriptdir
     dst_replace_confirm=True,
 ):
-    builddir = tempfile.TemporaryDirectory(dir='', ignore_cleanup_errors=True)
+    builddir = tempfile.TemporaryDirectory(dir='')
     distdir = distdir or 'dist'
     scriptdir = os.path.dirname(scriptpath)
     scriptname = os.path.basename(scriptpath)[:-3]
