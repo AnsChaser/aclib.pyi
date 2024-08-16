@@ -57,27 +57,32 @@ def compile(srcdir: str, dstdir: str = DIR_COMPILED, exclude_scripts: list[str] 
     exclude_scripts = exclude_scripts or []
     language_level = platform.python_version().split(".")[0]
     stringcode_pattern = 'f?((["\']{3})|(["\']))[\\s\\S]*?(?<!\\\\)\\1|#[\\s\\S]+?(?=\n|$)'
-    tempdir = tempfile.TemporaryDirectory(dir='')
-    copy_tree(srcdir, tempdir.name)
-    all_pyfiles = matchpath('**/*.py', root=tempdir.name, onlyfile=True)
-    exclude_pyfiles = matchpath(*exclude_scripts, root=tempdir.name, onlyfile=True)
+    tempdir = tempfile.TemporaryDirectory(dir='').name
+    copy_tree(srcdir, tempdir)
+    all_pyfiles = matchpath('**/*.py', root=tempdir, onlyfile=True)
+    exclude_pyfiles = matchpath(*exclude_scripts, root=tempdir, onlyfile=True)
     compiling_pyfiles = sorted(set(all_pyfiles) - set(exclude_pyfiles))
-    builddir_content1 = matchpath('build', 'build/*', root=tempdir.name, onlydir=True)
+    builddir_content1 = matchpath('build', 'build/*', root=tempdir, onlydir=True)
 
     for pyfile in compiling_pyfiles:
-        print(redstr(f'\nCompiling script {os.path.abspath(pyfile.replace(tempdir.name, srcdir, 1))} {"-"*30}> '))
+        print(redstr(f'\nCompiling script {os.path.abspath(pyfile.replace(tempdir, srcdir, 1))} {"-"*30}> '))
         with open(pyfile, 'r', encoding='utf8') as f:
             srccode = f.read()
         with open(pyfile, 'w', encoding='utf8') as f:
             f.write(re.sub(stringcode_pattern, unicode_stringcode, srccode))
-        os.system(f'cythonize -i -{language_level} {pyfile}')
+        for i in range(3):
+            extcode = os.system(f'cythonize -i -{language_level} {pyfile}')
+            if extcode == 0: break
+        if extcode != 0:
+            print(redstr(f'Compile failed: {os.path.abspath(pyfile.replace(tempdir, srcdir, 1))}'))
+            raise SystemExit(extcode)
         os.remove(pyfile)
         os.remove(pyfile[0:-2] + 'c')
-    builddir_content2 = matchpath('build', 'build/*', root=tempdir.name, onlydir=True)
+    builddir_content2 = matchpath('build', 'build/*', root=tempdir, onlydir=True)
     for buildlib in set(builddir_content2) - set(builddir_content1):
         if os.path.exists(buildlib):
             remove_tree(buildlib)
-    for pydfile in matchpath('**/*.cp*.pyd', root=tempdir.name, onlyfile=True):
+    for pydfile in matchpath('**/*.cp*.pyd', root=tempdir, onlyfile=True):
         pydparts = pydfile.split('.')
         pydparts.pop(-2)
         os.rename(pydfile, '.'.join(pydparts))
@@ -88,6 +93,6 @@ def compile(srcdir: str, dstdir: str = DIR_COMPILED, exclude_scripts: list[str] 
             if reply != 'y':
                 return print('compile canceled') or ''
         remove_tree(dstdir)
-    copy_tree(tempdir.name, dstdir)
+    copy_tree(tempdir, dstdir)
     print(greenstr(f'Compiled project: {os.path.abspath(dstdir)}'))
     return dstdir
