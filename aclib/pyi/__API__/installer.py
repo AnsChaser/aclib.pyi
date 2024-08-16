@@ -18,6 +18,7 @@ def makeversion(dstdir, appname) -> str:
 def pyipack(
     scriptpath: str,
     distdir: str=DIR_DIST,
+    dst_replace_confirm=True,
     appname: str=NAME_SCRIPTNAME,
     appversion: str=VER_AUTOMAKE,
     appicon: str=ICON_PYINSTALLER,   # [icopath/exepath] 可使用其他应用程序的图标
@@ -26,8 +27,12 @@ def pyipack(
     admin_permission=False,
     one_file_mode=False,
     appfiles: list[str]=None,    # [relaglob] 相对路径起点：scriptdir
-    dst_replace_confirm=True,
+    modules_which_require_extra_data: list[str]=None,    # [modulename] 模块名
 ):
+    """
+    @param appfiles: 需要一起打包的任何非Python文件，可使用glob模式
+    @param modules_which_require_extra_data: 如果待打包项目所依赖的某些模块也依赖了一些非Python文件，请在此列出其模块名以打包这些文件
+    """
     builddir = tempfile.TemporaryDirectory(dir='')
     distdir = distdir or 'dist'
     scriptdir = os.path.dirname(scriptpath)
@@ -51,6 +56,9 @@ def pyipack(
             topath = topath or "."
             datatype = "binary" if path.endswith(".pyd") else "data"
             args.append(f'--add-{datatype}={os.path.abspath(path)}{os.pathsep}{topath}')
+    for module in modules_which_require_extra_data or []:
+        args.append(f'--collect-data={module}')
+        args.append(f'--collect-binaries={module}')
     if appicon:
         args.append(f'--icon={appicon}')
     if not dst_replace_confirm:
