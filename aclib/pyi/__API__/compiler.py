@@ -18,7 +18,7 @@ def matchpath(*globexps: str, root='', onlyfile=False, onlydir=False) -> list[st
         paths = filter(lambda fp: os.path.isfile(fp), paths)
     if onlydir:
         paths = filter(lambda fp: os.path.isdir(fp), paths)
-    return sorted(paths)
+    return sorted(map(lambda p: os.path.join(root, os.path.relpath(p, root)), paths))
 
 def unicodeOf(string: str) -> str:
     return ''.join(char.encode('unicode-escape').decode() if ord(char) > 256 else char for char in string)
